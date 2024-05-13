@@ -225,6 +225,17 @@ const RPCS = [
   "https://sui-mainnet-eu-4.cosmostation.io",
   "https://mainnet.sui.rpcpool.com",
   "https://sui-mainnet-ca-2.cosmostation.io",
+  "https://sui-rpc.publicnode.com",
+
+];
+const TESTRPCS = [
+    "https://sui-mainnet-rpc.nodereal.io/",
+    "https://sui-mainnet.blastapi.io/ec5706a7-9265-43da-8342-eb78ba169dee",
+    "https://sui-mainnet.blastapi.io/b8877300-da75-40da-9c2c-2eff0c276f0f",
+    "https://sui-mainnet.s.chainbase.online/v1/2gP7RAr2bpjHwkAVChSGJdrulex",
+    "https://sui-mainnet.s.chainbase.online/v1/2gP7cexPo3N4fFmNZ2fhztS9wLF",
+  "https://sui-mainnet.blockvision.org/v1/2gP6Lrv1TbApQmQBHKSB1bO8W0e",
+  "https://sui-mainnet.blockvision.org/v1/2gP5wwDmhJ2G20Rvt3wtwuTMhnO",
 ];
 export async function runner(
     client: SuiClient,
@@ -248,7 +259,7 @@ export async function runner(
 
       if (!currentHash) {
         const miner = await Miner.fetch(new SuiClient({
-          url: RPCS[Math.floor(Math.random() * RPCS.length)],
+          url: TESTRPCS[Math.floor(Math.random() * TESTRPCS.length)],
         }), minerId);
         currentHash = new Uint8Array(miner.currentHash);
         log("📡rpc ok");
@@ -286,7 +297,7 @@ export async function runner(
             wallet,
             nonce,
             new SuiClient({
-              url: RPCS[Math.floor(Math.random() * RPCS.length)],
+              url: TESTRPCS[Math.floor(Math.random() * TESTRPCS.length)],
             }),
             minerId,
             handleEvent
