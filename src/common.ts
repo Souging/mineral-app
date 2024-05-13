@@ -20,7 +20,7 @@ import numbro from "numbro";
 import { SignatureWithBytes } from "@mysten/sui.js/dist/cjs/cryptography";
 
 export const CONFIG =
-  "0x0fc44c38dd791dffb696ca7448cb8b1774c17178d3dd3b0fed3480f2ac82bd5b";
+    "0x0fc44c38dd791dffb696ca7448cb8b1774c17178d3dd3b0fed3480f2ac82bd5b";
 export const BUSES = [
   "0x2bbc816d1139263190f738783789e23b69eb84f1293d0417432ed8c00556ed7c",
   "0x4ac2335213b48837a6036c37078af04921bac8844c982728cbcfcdc9304dce2a",
@@ -33,11 +33,11 @@ export const BUSES = [
 ];
 
 export type MineEvent =
-  | "resetting"
-  | "retrying"
-  | "simulating"
-  | "submitting"
-  | "waiting";
+    | "resetting"
+    | "retrying"
+    | "simulating"
+    | "submitting"
+    | "waiting";
 
 // Use typescript-eslint or varsIgnorePattern
 /* eslint-disable no-unused-vars */
@@ -63,7 +63,7 @@ export function getBus() {
 }
 
 export async function findBus(
-  client: SuiClient
+    client: SuiClient
 ): Promise<{ bus: Bus; status: BusStatus }> {
   const objs = await client.multiGetObjects({
     ids: BUSES,
@@ -79,30 +79,30 @@ export async function findBus(
   buses.reverse();
 
   const busWithRewards = buses.find(
-    (bus) => bus.rewards.value >= bus.rewardRate
+      (bus) => bus.rewards.value >= bus.rewardRate
   );
   if (busWithRewards) {
     return {
       bus: busWithRewards,
       status: canBeReset(busWithRewards.lastReset)
-        ? BusStatus.ResetNeeded
-        : BusStatus.MineOk,
+          ? BusStatus.ResetNeeded
+          : BusStatus.MineOk,
     };
   } else {
     const bus = buses[0];
     return {
       bus,
       status: canBeReset(bus.lastReset)
-        ? BusStatus.ResetNeeded
-        : BusStatus.RewardsExhausted,
+          ? BusStatus.ResetNeeded
+          : BusStatus.RewardsExhausted,
     };
   }
 }
 
 export async function ship(
-  preSign: SignatureWithBytes,
-  client: SuiClient,
-  opts?: SuiTransactionBlockResponseOptions
+    preSign: SignatureWithBytes,
+    client: SuiClient,
+    opts?: SuiTransactionBlockResponseOptions
 ): Promise<SuiTransactionBlockResponse> {
   const dryRun = await client.dryRunTransactionBlock({
     transactionBlock: preSign.bytes,
@@ -127,9 +127,9 @@ export async function ship(
 }
 
 export function buildTx(
-  txb: TransactionBlock,
-  client: SuiClient,
-  wallet: Ed25519Keypair
+    txb: TransactionBlock,
+    client: SuiClient,
+    wallet: Ed25519Keypair
 ): Promise<SignatureWithBytes> {
   txb.setSender(wallet.toSuiAddress());
   txb.setGasBudget(5000000);
@@ -140,20 +140,20 @@ export function buildTx(
 }
 
 export async function launch(
-  txb: TransactionBlock,
-  client: SuiClient,
-  wallet: Ed25519Keypair
+    txb: TransactionBlock,
+    client: SuiClient,
+    wallet: Ed25519Keypair
 ): Promise<SuiTransactionBlockResponse> {
   const preSign = await buildTx(txb, client, wallet);
   return ship(preSign, client);
 }
 
 export async function buildMineTx(
-  nonce: bigint,
-  minerId: string,
-  client: SuiClient,
-  bus: Bus,
-  payer: string
+    nonce: bigint,
+    minerId: string,
+    client: SuiClient,
+    bus: Bus,
+    payer: string
 ): Promise<TransactionBlock> {
   const txb = new TransactionBlock();
   const shared = await getSharedVersion(bus.id, client);
@@ -179,9 +179,9 @@ export function fakeProof(nonce: bigint): Uint8Array {
 }
 
 export function createHash(
-  currentHash: Uint8Array,
-  signerAddressBytes: Uint8Array,
-  nonce: bigint
+    currentHash: Uint8Array,
+    signerAddressBytes: Uint8Array,
+    nonce: bigint
 ): Uint8Array {
   const dataToHash = new Uint8Array(32 + 32 + 8);
   dataToHash.set(currentHash, 0);
@@ -201,8 +201,8 @@ export function int64to8(n: bigint) {
 }
 
 export async function getProof(
-  client: SuiClient,
-  address: string
+    client: SuiClient,
+    address: string
 ): Promise<string | null> {
   const res = await client.getOwnedObjects({
     owner: address,
@@ -211,28 +211,47 @@ export async function getProof(
   const [miner] = res.data;
   return miner && miner.data ? miner.data.objectId : null;
 }
-
+const RPCS = [
+  "https://fullnode.mainnet.sui.io:443",
+  "https://mainnet.suiet.app",
+  "https://sui-mainnet-us-1.cosmostation.io",
+  "https://sui-mainnet-us-2.cosmostation.io",
+  "https://sui-mainnet-endpoint.blockvision.org",
+  "https://sui-mainnet.public.blastapi.io",
+  "https://sui-mainnet-rpc.allthatnode.com",
+  "https://sui-mainnet-eu-3.cosmostation.io",
+  "https://rpc-mainnet.suiscan.xyz",
+  "https://sui1mainnet-rpc.chainode.tech",
+  "https://sui-mainnet-eu-4.cosmostation.io",
+  "https://mainnet.sui.rpcpool.com",
+  "https://sui-mainnet-ca-2.cosmostation.io",
+];
 export async function runner(
-  client: SuiClient,
-  difficulty: number,
-  wallet: Ed25519Keypair,
-  minerId: string,
-  logger?: (_val: string) => void
+    client: SuiClient,
+    difficulty: number,
+    wallet: Ed25519Keypair,
+    minerId: string,
+    logger?: (_val: string) => void
 ) {
   const log = (val: string) => (logger ? logger(val) : null);
   const tag = wallet.toSuiAddress().slice(0, 8);
 
   const signerBytes = bcs.Address.serialize(wallet.toSuiAddress()).toBytes();
-
+  //const url = client.url;
   let currentHash: Uint8Array | null = null;
   let nonce = BigInt(0);
+  //log(url);
   log("⛏️  Mining started");
   log("🔍 Looking for a valid proof...");
   while (true) {
     await (async () => {
+
       if (!currentHash) {
-        const miner = await Miner.fetch(client, minerId);
+        const miner = await Miner.fetch(new SuiClient({
+          url: RPCS[Math.floor(Math.random() * RPCS.length)],
+        }), minerId);
         currentHash = new Uint8Array(miner.currentHash);
+        log("📡rpc ok");
       }
 
       const hash = createHash(currentHash, signerBytes, nonce);
@@ -241,27 +260,36 @@ export async function runner(
         const handleEvent = (ev: MineEvent) => {
           switch (ev) {
             case "resetting": {
+              log("📡 resetting");
+              currentHash = null;
               break;
             }
             case "retrying": {
+              log("📡 retrying");
+              currentHash = null;
               break;
             }
             case "submitting": {
               log("✅ Valid hash found");
               log("📡 Submitting transaction");
+              currentHash = null;
               break;
             }
             case "simulating": {
+              log("📡 simulating");
+              currentHash = null;
               break;
             }
           }
         };
         const res = await submitProof(
-          wallet,
-          nonce,
-          client,
-          minerId,
-          handleEvent
+            wallet,
+            nonce,
+            new SuiClient({
+              url: RPCS[Math.floor(Math.random() * RPCS.length)],
+            }),
+            minerId,
+            handleEvent
         );
 
         if (!res) {
@@ -299,8 +327,8 @@ export function canBeReset(ts: bigint) {
 }
 
 export async function execReset(
-  client: SuiClient,
-  wallet: Ed25519Keypair
+    client: SuiClient,
+    wallet: Ed25519Keypair
 ): Promise<SuiTransactionBlockResponse | null> {
   const bus = await Bus.fetch(client, BUSES[0]);
 
@@ -312,11 +340,11 @@ export async function execReset(
     epochReset(txb, {
       config: CONFIG,
       buses: BUSES.map((x) =>
-        txb.sharedObjectRef({
-          objectId: x,
-          mutable: true,
-          initialSharedVersion: shared,
-        })
+          txb.sharedObjectRef({
+            objectId: x,
+            mutable: true,
+            initialSharedVersion: shared,
+          })
       ),
       clock: SUI_CLOCK_OBJECT_ID,
     });
@@ -350,8 +378,8 @@ export async function execReset(
 }
 
 export async function getOrCreateMiner(
-  wallet: Ed25519Keypair,
-  client: SuiClient
+    wallet: Ed25519Keypair,
+    client: SuiClient
 ): Promise<string> {
   const pub = wallet.toSuiAddress();
   const proof = await getProof(client, pub);
@@ -385,8 +413,8 @@ export function extractError(status: ExecutionStatus): string | null {
 }
 
 export async function getSharedVersion(
-  addr: string,
-  client: SuiClient
+    addr: string,
+    client: SuiClient
 ): Promise<string> {
   const configObj = await client.getObject({
     id: addr,
@@ -394,8 +422,8 @@ export async function getSharedVersion(
   });
   const owner = configObj?.data?.owner || null;
   const shared =
-    // @ts-ignore
-    owner && owner.Shared ? owner.Shared : null;
+      // @ts-ignore
+      owner && owner.Shared ? owner.Shared : null;
   if (!shared) {
     throw Error("no shared version");
   }
@@ -403,11 +431,11 @@ export async function getSharedVersion(
 }
 
 export async function submitProof(
-  wallet: Ed25519Keypair,
-  nonce: bigint,
-  client: SuiClient,
-  miner: string,
-  logger?: (_val: MineEvent) => void
+    wallet: Ed25519Keypair,
+    nonce: bigint,
+    client: SuiClient,
+    miner: string,
+    logger?: (_val: MineEvent) => void
 ): Promise<SuiTransactionBlockResponse | null> {
   const log = (val: MineEvent) => (logger ? logger(val) : null);
   const { bus, status } = await findBus(client);
@@ -429,11 +457,11 @@ export async function submitProof(
   }
 
   const txb = await buildMineTx(
-    nonce,
-    miner,
-    client,
-    bus,
-    wallet.toSuiAddress()
+      nonce,
+      miner,
+      client,
+      bus,
+      wallet.toSuiAddress()
   );
 
   const signedTx = await buildTx(txb, client, wallet);
